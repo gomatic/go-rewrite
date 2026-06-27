@@ -147,3 +147,17 @@ func TestOSFileSystemMoveMissing(t *testing.T) {
 
 	must.ErrorIs(err, ErrMoveFile)
 }
+
+// TestOSFileSystemRootMissing proves that when Root itself cannot be opened as a
+// traversal-safe handle (os.OpenRoot fails because the directory does not
+// exist), Read surfaces the failure as ErrOpenFile rather than panicking.
+func TestOSFileSystemRootMissing(t *testing.T) {
+	t.Parallel()
+	must := require.New(t)
+
+	missingRoot := filepath.Join(t.TempDir(), "no-such-dir")
+
+	_, err := OSFileSystem{Root: FilePath(missingRoot)}.Read("anything.txt")
+
+	must.ErrorIs(err, ErrOpenFile)
+}

@@ -3,7 +3,6 @@ package rewrite
 import (
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/gomatic/go-module"
@@ -66,9 +65,14 @@ func (o OSFileSystem) List() ([]FilePath, error) {
 	return o.Lister()
 }
 
-// Read returns the contents of path resolved against Root.
+// Read returns the contents of path resolved beneath Root.
 func (o OSFileSystem) Read(path FilePath) ([]byte, error) {
-	data, err := os.ReadFile(o.resolve(path))
+	var data []byte
+	err := o.withRoot(func(root *os.Root) error {
+		var err error
+		data, err = root.ReadFile(string(path))
+		return err
+	})
 	if err != nil {
 		return nil, ErrOpenFile.With(err, string(path))
 	}
@@ -79,30 +83,49 @@ func (o OSFileSystem) Read(path FilePath) ([]byte, error) {
 // not already exist; an existing file keeps its own mode (see Write).
 const newFilePerm = 0o600
 
-// Write replaces the contents of path resolved against Root, preserving the
+// Write replaces the contents of path resolved beneath Root, preserving the
 // file's existing permission bits. A file that does not yet exist is created
 // with the restrictive newFilePerm rather than a hardcoded permissive mode.
 func (o OSFileSystem) Write(path FilePath, data []byte) error {
-	resolved := o.resolve(path)
-	perm := os.FileMode(newFilePerm)
-	if info, err := os.Stat(resolved); err == nil {
-		perm = info.Mode().Perm()
-	}
-	if err := os.WriteFile(resolved, data, perm); err != nil {
+	err := o.withRoot(func(root *os.Root) error {
+		return writeRoot(root, string(path), data)
+	})
+	if err != nil {
 		return ErrWriteFile.With(err, string(path))
 	}
 	return nil
 }
 
-// Move renames a directory from one path to another, both resolved against Root.
+// writeRoot writes data to name beneath root, keeping an existing file's
+// permission bits and creating a new file with the restrictive newFilePerm.
+func writeRoot(root *os.Root, name string, data []byte) error {
+	perm := os.FileMode(newFilePerm)
+	if info, err := root.Stat(name); err == nil {
+		perm = info.Mode().Perm()
+	}
+	return root.WriteFile(name, data, perm)
+}
+
+// Move renames a directory from one path to another, both resolved beneath Root.
 func (o OSFileSystem) Move(from, to FilePath) error {
-	if err := os.Rename(o.resolve(from), o.resolve(to)); err != nil {
+	err := o.withRoot(func(root *os.Root) error {
+		return root.Rename(string(from), string(to))
+	})
+	if err != nil {
 		return ErrMoveFile.With(err, string(from))
 	}
 	return nil
 }
 
-// resolve joins a project-relative path onto Root.
-func (o OSFileSystem) resolve(path FilePath) string {
-	return filepath.Join(string(o.Root), string(path))
+// withRoot opens Root as a traversal-safe handle and runs fn against it. The
+// handle (os.OpenRoot, Go 1.24+) confines every path operation beneath Root: a
+// path that would escape the root fails rather than resolving outside it, so the
+// adapter cannot be tricked into reading or writing a sibling of the project.
+func (o OSFileSystem) withRoot(fn func(*os.Root) error) error {
+	root, err := os.OpenRoot(string(o.Root))
+	if err != nil {
+		return err
+	}
+	defer func() { _ = root.Close() }()
+	return fn(root)
 }

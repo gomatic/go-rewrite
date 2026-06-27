@@ -153,6 +153,15 @@ func nameOrRepo(override module.Name, path module.Path) module.Name {
 // replacements lists the token substitutions, most specific first so that the
 // full module path is replaced before the bare name, the uppercase environment
 // prefix before the lowercase identifier, and the identifier before the raw name.
+//
+// Replacement contract: every token is matched and replaced as a RAW substring,
+// with no word boundaries, casing rules, or token grammar (see applyAll). Order
+// is therefore load-bearing — the more specific token must precede any token
+// that is a substring of it, so the broad form never consumes the narrow one
+// first. Because matching is unanchored, a short or common identity token will
+// over-rewrite incidental occurrences elsewhere in the files; callers must
+// supply distinctive identity tokens (a full module path, a namespaced command
+// name) so that a match is always the project's identity and never coincidence.
 func replacements(current, target Identity) []Replacement {
 	cn, tn := current.Name, target.Name
 	return []Replacement{
@@ -195,7 +204,11 @@ func rewriteFile(fs FileSystem, path FilePath, repls []Replacement, dry DryRun) 
 	return true, fs.Write(path, []byte(updated))
 }
 
-// applyAll applies every non-identity replacement to content in order.
+// applyAll applies every non-identity replacement to content in order. Each
+// token is replaced as a raw substring via strings.ReplaceAll — no word
+// boundaries, no escaping — so the caller-supplied ordering and the
+// distinctiveness of the tokens (see replacements) are what keep the rewrite
+// correct. Replacements with an empty or unchanged From are skipped.
 func applyAll(content string, repls []Replacement) string {
 	for _, r := range repls {
 		if r.From == "" || r.From == r.To {

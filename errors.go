@@ -1,7 +1,6 @@
 package rewrite
 
-// Imported bare (the package is named error); this file declares only sentinels
-// and uses no builtin error type, so each declaration reads errs.Const.
+// errs holds this package's intrinsic sentinels on the shared go-error mechanism.
 import errs "github.com/gomatic/go-error"
 
 const (

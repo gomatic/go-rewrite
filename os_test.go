@@ -6,10 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/gomatic/go-module"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/gomatic/go-module"
 )
 
 // initRepo creates a git repository in dir with an origin remote and one staged

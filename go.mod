@@ -3,8 +3,8 @@ module github.com/gomatic/go-rewrite
 go 1.26.4
 
 require (
-	github.com/gomatic/go-error v0.1.0
-	github.com/gomatic/go-module v0.1.0
+	github.com/gomatic/go-error v0.2.2
+	github.com/gomatic/go-module v0.2.0
 	github.com/stretchr/testify v1.11.1
 )
 

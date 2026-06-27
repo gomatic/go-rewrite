@@ -4,10 +4,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/gomatic/go-module"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/gomatic/go-module"
 )
 
 // errReadFailed is an arbitrary error injected by the "list fails" cases to prove

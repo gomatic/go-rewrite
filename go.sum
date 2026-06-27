@@ -295,10 +295,10 @@ github.com/golangci/swaggoswag v0.0.0-20250504205917-77f2aca3143e h1:ai0EfmVYE2b
 github.com/golangci/swaggoswag v0.0.0-20250504205917-77f2aca3143e/go.mod h1:Vrn4B5oR9qRwM+f54koyeH3yzphlecwERs0el27Fr/s=
 github.com/golangci/unconvert v0.0.0-20250410112200-a129a6e6413e h1:gD6P7NEo7Eqtt0ssnqSJNNndxe69DOQ24A5h7+i3KpM=
 github.com/golangci/unconvert v0.0.0-20250410112200-a129a6e6413e/go.mod h1:h+wZwLjUTJnm/P2rwlbJdRPZXOzaT36/FwnPnY2inzc=
-github.com/gomatic/go-error v0.1.0 h1:V0ZeeswGmuCEY1k/qdbZlJKx6qFvX0MXNJaLRL4yhD8=
-github.com/gomatic/go-error v0.1.0/go.mod h1:+PAmcazlzCIDFBglesekV1LUQTEaQB+5801gftMxgZY=
-github.com/gomatic/go-module v0.1.0 h1:gK7TUbq9Aibigee9cC2B8bkoSVfKs0DuGxLM4ps5WNc=
-github.com/gomatic/go-module v0.1.0/go.mod h1:v4J1TtYmgmzOKO08mAk2+cxTBXwbpBXxsDxdKYP+x+I=
+github.com/gomatic/go-error v0.2.2 h1:idSMJduSTDFOp48MnuhMsBH53HrHd8P7LNhdWHtWaVg=
+github.com/gomatic/go-error v0.2.2/go.mod h1:+PAmcazlzCIDFBglesekV1LUQTEaQB+5801gftMxgZY=
+github.com/gomatic/go-module v0.2.0 h1:gjOn+Uy59EgzMbpmRcCKD/EmiroA0gwjPP8G5Da7Iuw=
+github.com/gomatic/go-module v0.2.0/go.mod h1:Q+wtIkQsYJJKk0Z5/WlyBkJBg3iGCBHwil29ekxq2IU=
 github.com/google/btree v0.0.0-20180813153112-4030bb1f1f0c/go.mod h1:lNA+9X1NB3Zf8V7Ke586lFgjr2dZNuvo3lPJSGZ5JPQ=
 github.com/google/btree v1.0.0/go.mod h1:lNA+9X1NB3Zf8V7Ke586lFgjr2dZNuvo3lPJSGZ5JPQ=
 github.com/google/go-cmdtest v0.4.1-0.20220921163831-55ab3332a786 h1:rcv+Ippz6RAtvaGgKxc+8FQIpxHgsF+HBzPyYL2cyVU=

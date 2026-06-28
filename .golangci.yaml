@@ -1,3 +1,4 @@
+# Managed by nicerobot/tools.repository (distribute-build)
 # Default golangci-lint (v2) configuration shipped with the go-tooling image.
 #
 # Consuming repositories may override this entirely by committing their own
@@ -45,7 +46,6 @@ linters:
     gosec:
       excludes:
         - G115 # integer overflow conversion noise; rely on staticcheck/manual review
-        - G204 # subprocess execution is a deliberate feature of tool/wrapper repos; rely on review
     revive:
       # revive's standalone binary only reads TOML; configuring it here (YAML)
       # via golangci-lint avoids a separate TOML config entirely.

@@ -352,11 +352,11 @@ build-all: pre-build ## Build binaries for all platforms
 
 .PHONY: release
 release: pre-build ## Create a release with goreleaser
-	$(GORELEASER) release --clean
+	$(if $(GORELEASER_CONFIG),$(GORELEASER) release --clean,@echo "no .goreleaser.yml — library released via its git tag; nothing to do")
 
 .PHONY: release-snapshot
 release-snapshot: pre-build ## Create a snapshot release (no git tag required)
-	$(GORELEASER) release --snapshot --clean
+	$(if $(GORELEASER_CONFIG),$(GORELEASER) release --snapshot --clean,@echo "no .goreleaser.yml — nothing to release")
 
 ##@ Docker
 

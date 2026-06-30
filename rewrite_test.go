@@ -139,7 +139,12 @@ func TestDiscoverErrors(t *testing.T) {
 		{name: "list fails", git: fakeGit{remote: targetRemote}, fs: listErr, wantErr: errReadFailed},
 		{name: "no cmd directory", git: fakeGit{remote: targetRemote}, fs: noCmd, wantErr: ErrNotFound},
 		{name: "remote fails", git: fakeGit{err: ErrGitCommand}, fs: sourceFS(), wantErr: ErrGitCommand},
-		{name: "remote invalid", git: fakeGit{remote: "not-a-remote"}, fs: sourceFS(), wantErr: module.ErrInvalidRemote},
+		{
+			name:    "remote invalid",
+			git:     fakeGit{remote: "not-a-remote"},
+			fs:      sourceFS(),
+			wantErr: module.ErrInvalidRemote,
+		},
 	}
 
 	for _, tt := range tests {

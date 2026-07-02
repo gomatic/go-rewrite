@@ -93,16 +93,16 @@ func BuildPlan(current, target Identity) Plan {
 
 // Apply executes the plan against fs, returning the files whose contents changed.
 // When dry is true it reports the would-be changes without writing or moving.
-func (p Plan) Apply(fs FileSystem, dry DryRun) (Changed, error) {
+func (p Plan) Apply(fs FileSystem, isDry DryRun) (Changed, error) {
 	files, err := fs.List()
 	if err != nil {
 		return nil, err
 	}
-	changed, err := rewriteFiles(fs, files, p.Replacements, dry)
+	changed, err := rewriteFiles(fs, files, p.Replacements, isDry)
 	if err != nil {
 		return nil, err
 	}
-	if err := move(fs, p.MoveFrom, p.MoveTo, dry); err != nil {
+	if err := move(fs, p.MoveFrom, p.MoveTo, isDry); err != nil {
 		return nil, err
 	}
 	return changed, nil
@@ -173,10 +173,10 @@ func replacements(current, target Identity) []Replacement {
 }
 
 // rewriteFiles applies the replacements to each file, collecting those changed.
-func rewriteFiles(fs FileSystem, files []FilePath, repls []Replacement, dry DryRun) (Changed, error) {
+func rewriteFiles(fs FileSystem, files []FilePath, repls []Replacement, isDry DryRun) (Changed, error) {
 	var changed Changed
 	for _, file := range files {
-		ok, err := rewriteFile(fs, file, repls, dry)
+		ok, err := rewriteFile(fs, file, repls, isDry)
 		if err != nil {
 			return nil, err
 		}
@@ -189,16 +189,16 @@ func rewriteFiles(fs FileSystem, files []FilePath, repls []Replacement, dry DryR
 
 // rewriteFile rewrites a single file, reporting whether its contents changed. It
 // writes only when not a dry run and only when the contents actually differ.
-func rewriteFile(fs FileSystem, path FilePath, repls []Replacement, dry DryRun) (bool, error) {
+func rewriteFile(fs FileSystem, path FilePath, repls []Replacement, isDry DryRun) (bool, error) {
 	data, err := fs.Read(path)
 	if err != nil {
 		return false, err
 	}
-	updated := applyAll(string(data), repls)
-	if updated == string(data) {
+	updated := applyAll(fileContent(data), repls)
+	if string(updated) == string(data) {
 		return false, nil
 	}
-	if dry {
+	if isDry {
 		return true, nil
 	}
 	return true, fs.Write(path, []byte(updated))
@@ -209,19 +209,22 @@ func rewriteFile(fs FileSystem, path FilePath, repls []Replacement, dry DryRun) 
 // boundaries, no escaping — so the caller-supplied ordering and the
 // distinctiveness of the tokens (see replacements) are what keep the rewrite
 // correct. Replacements with an empty or unchanged From are skipped.
-func applyAll(content string, repls []Replacement) string {
+func applyAll(content fileContent, repls []Replacement) fileContent {
 	for _, r := range repls {
 		if r.From == "" || r.From == r.To {
 			continue
 		}
-		content = strings.ReplaceAll(content, string(r.From), string(r.To))
+		content = fileContent(strings.ReplaceAll(string(content), string(r.From), string(r.To)))
 	}
 	return content
 }
 
+// fileContent is a file's full text under rewrite.
+type fileContent string
+
 // move renames the command directory, skipping a no-op or a dry run.
-func move(fs FileSystem, from, to FilePath, dry DryRun) error {
-	if from == to || dry {
+func move(fs FileSystem, from, to FilePath, isDry DryRun) error {
+	if from == to || isDry {
 		return nil
 	}
 	return fs.Move(from, to)
@@ -235,17 +238,20 @@ func commandDir(name module.Name) FilePath {
 // parseModule extracts the module path from the "module" directive of go.mod.
 func parseModule(data []byte) (module.Path, error) {
 	for line := range strings.SplitSeq(string(data), "\n") {
-		if path, ok := moduleDirective(line); ok {
+		if path, ok := moduleDirective(modLine(line)); ok {
 			return path, nil
 		}
 	}
 	return "", ErrNotFound.With(nil, "module directive")
 }
 
+// modLine is one line of a go.mod file.
+type modLine string
+
 // moduleDirective returns the module path declared by a "module <path>" line.
-func moduleDirective(line string) (module.Path, bool) {
+func moduleDirective(line modLine) (module.Path, bool) {
 	const directive = "module "
-	trimmed := strings.TrimSpace(line)
+	trimmed := strings.TrimSpace(string(line))
 	if !strings.HasPrefix(trimmed, directive) {
 		return "", false
 	}
@@ -255,7 +261,7 @@ func moduleDirective(line string) (module.Path, bool) {
 // commandName returns the single segment under cmd/ among the project files.
 func commandName(files []FilePath) (module.Name, error) {
 	for _, file := range files {
-		if name, ok := commandSegment(string(file)); ok {
+		if name, ok := commandSegment(file); ok {
 			return name, nil
 		}
 	}
@@ -263,11 +269,11 @@ func commandName(files []FilePath) (module.Name, error) {
 }
 
 // commandSegment returns the <name> in a "cmd/<name>/..." path.
-func commandSegment(path string) (module.Name, bool) {
-	if !strings.HasPrefix(path, cmdPrefix) {
+func commandSegment(path FilePath) (module.Name, bool) {
+	if !strings.HasPrefix(string(path), cmdPrefix) {
 		return "", false
 	}
-	rest := path[len(cmdPrefix):]
+	rest := string(path)[len(cmdPrefix):]
 	if before, _, found := strings.Cut(rest, "/"); found {
 		return module.Name(before), true
 	}

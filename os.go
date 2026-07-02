@@ -28,7 +28,7 @@ func (g OSGit) Files() ([]FilePath, error) {
 	if err != nil {
 		return nil, err
 	}
-	return lines(string(out)), nil
+	return lines(gitOutput(string(out))), nil
 }
 
 // run executes a git subcommand in g.Dir and returns its standard output.
@@ -42,10 +42,13 @@ func (g OSGit) run(args ...string) ([]byte, error) {
 	return out, nil
 }
 
+// gitOutput is the raw stdout of a git subcommand.
+type gitOutput string
+
 // lines splits trimmed output into non-empty file paths.
-func lines(out string) []FilePath {
+func lines(out gitOutput) []FilePath {
 	var paths []FilePath
-	for line := range strings.SplitSeq(out, "\n") {
+	for line := range strings.SplitSeq(string(out), "\n") {
 		if trimmed := strings.TrimSpace(line); trimmed != "" {
 			paths = append(paths, FilePath(trimmed))
 		}
@@ -88,7 +91,7 @@ const newFilePerm = 0o600
 // with the restrictive newFilePerm rather than a hardcoded permissive mode.
 func (o OSFileSystem) Write(path FilePath, data []byte) error {
 	err := o.withRoot(func(root *os.Root) error {
-		return writeRoot(root, string(path), data)
+		return writeRoot(root, path, data)
 	})
 	if err != nil {
 		return ErrWriteFile.With(err, string(path))
@@ -98,12 +101,12 @@ func (o OSFileSystem) Write(path FilePath, data []byte) error {
 
 // writeRoot writes data to name beneath root, keeping an existing file's
 // permission bits and creating a new file with the restrictive newFilePerm.
-func writeRoot(root *os.Root, name string, data []byte) error {
+func writeRoot(root *os.Root, name FilePath, data []byte) error {
 	perm := os.FileMode(newFilePerm)
-	if info, err := root.Stat(name); err == nil {
+	if info, err := root.Stat(string(name)); err == nil {
 		perm = info.Mode().Perm()
 	}
-	return root.WriteFile(name, data, perm)
+	return root.WriteFile(string(name), data, perm)
 }
 
 // Move renames a directory from one path to another, both resolved beneath Root.

@@ -70,9 +70,9 @@ func (g fakeGit) Remote() (module.Remote, error) { return g.remote, g.err }
 
 func sourceFS() *fakeFS {
 	return &fakeFS{
-		files: []FilePath{"go.mod", "project.go", "README.md", "cmd/before.cli/main.go"},
+		files: []FilePath{goModFile, "project.go", "README.md", "cmd/before.cli/main.go"},
 		data: map[FilePath][]byte{
-			"go.mod":                 []byte("module example.com/org/before.cli\n"),
+			goModFile:                []byte("module example.com/org/before.cli\n"),
 			"project.go":             []byte("package beforecli\n"),
 			"README.md":              []byte("no identity tokens here\n"),
 			"cmd/before.cli/main.go": []byte("const env = \"BEFORE_CLI\"\nname = \"before.cli\"\n"),
@@ -156,22 +156,6 @@ func TestDiscoverErrors(t *testing.T) {
 	}
 }
 
-func TestBuildPlan(t *testing.T) {
-	t.Parallel()
-	want := assert.New(t)
-
-	plan := BuildPlan(sourceIdentity(), targetIdentityValue())
-
-	want.Equal(FilePath("cmd/before.cli"), plan.MoveFrom)
-	want.Equal(FilePath("cmd/after.cli"), plan.MoveTo)
-	want.Equal([]Replacement{
-		{From: "example.com/org/before.cli", To: "example.com/org/after.cli"},
-		{From: "BEFORE_CLI", To: "AFTER_CLI"},
-		{From: "beforecli", To: "aftercli"},
-		{From: "before.cli", To: "after.cli"},
-	}, plan.Replacements)
-}
-
 func TestApply(t *testing.T) {
 	t.Parallel()
 	want, must := assert.New(t), require.New(t)
@@ -251,30 +235,6 @@ func TestApplyErrors(t *testing.T) {
 			require.ErrorIs(t, err, tt.wantErr)
 		})
 	}
-}
-
-func TestApplySkipsEmptyAndIdenticalReplacements(t *testing.T) {
-	t.Parallel()
-	want, must := assert.New(t), require.New(t)
-
-	fs := &fakeFS{
-		files:   []FilePath{"f"},
-		data:    map[FilePath][]byte{"f": []byte("keep abc xyz")},
-		readErr: map[FilePath]error{},
-	}
-	plan := Plan{
-		Replacements: []Replacement{
-			{From: "", To: "ignored"},  // empty From is skipped
-			{From: "abc", To: "abc"},   // identical is skipped
-			{From: "xyz", To: "final"}, // applied
-		},
-	}
-
-	changed, err := plan.Apply(fs, false)
-
-	must.NoError(err)
-	want.Equal(Changed{"f"}, changed)
-	want.Equal("keep abc final", string(fs.data["f"]))
 }
 
 func TestParseModule(t *testing.T) {

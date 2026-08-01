@@ -161,3 +161,63 @@ func TestOSFileSystemRootMissing(t *testing.T) {
 
 	must.ErrorIs(err, ErrOpenFile)
 }
+
+// TestWithRootConfinesEveryPathBeneathTheProjectRoot names withRoot's claim,
+// and it is the security boundary of this whole adapter. Every path this
+// package touches comes from a rewrite plan, and a plan is data — so a path
+// escaping the root is an arbitrary file read or write against the machine
+// running the rewrite. os.OpenRoot is what makes an escape FAIL rather than
+// resolve, and the test is that it actually does for each way a path can try.
+//
+// The sibling case is the sharp one: "../sibling/file" resolves to a real,
+// existing file just outside the root, so a confinement that only rejected
+// non-existent paths would let it through.
+func TestWithRootConfinesEveryPathBeneathTheProjectRoot(t *testing.T) {
+	t.Parallel()
+	base := t.TempDir()
+	root := filepath.Join(base, "project")
+	sibling := filepath.Join(base, "sibling")
+	require.NoError(t, os.MkdirAll(root, 0o750))
+	require.NoError(t, os.MkdirAll(sibling, 0o750))
+	require.NoError(t, os.WriteFile(filepath.Join(root, "inside.txt"), []byte("inside"), 0o600))
+	require.NoError(t, os.WriteFile(filepath.Join(sibling, "secret.txt"), []byte("secret"), 0o600))
+
+	fs := OSFileSystem{Root: FilePath(root)}
+
+	got, err := fs.Read("inside.txt")
+	require.NoError(t, err, "an ordinary path inside the root still works")
+	assert.Equal(t, "inside", string(got))
+
+	for _, escape := range []FilePath{
+		"../sibling/secret.txt",
+		"../../etc/passwd",
+		"./../sibling/secret.txt",
+		"a/../../sibling/secret.txt",
+	} {
+		data, readErr := fs.Read(escape)
+
+		require.Error(t, readErr, "reading %q must fail rather than resolve outside the root", escape)
+		assert.NotContains(t, string(data), "secret", "no content from outside the root may be returned")
+	}
+
+	for _, escape := range []FilePath{"../sibling/written.txt", "../../tmp/written.txt"} {
+		require.Error(t, fs.Write(escape, []byte("x")),
+			"writing %q must fail rather than create a file outside the root", escape)
+	}
+
+	entries, err := os.ReadDir(sibling)
+	require.NoError(t, err)
+	assert.Len(t, entries, 1, "nothing may have been created outside the root")
+}
+
+// TestWithRootSurfacesAnUnopenableRoot covers the other half: a root that
+// cannot be opened is an error the caller sees, not a silent fall-back to
+// unconfined path resolution.
+func TestWithRootSurfacesAnUnopenableRoot(t *testing.T) {
+	t.Parallel()
+	fs := OSFileSystem{Root: FilePath(filepath.Join(t.TempDir(), "does-not-exist"))}
+
+	_, err := fs.Read("anything.txt")
+
+	assert.Error(t, err, "an unopenable root must fail rather than resolve paths unconfined")
+}

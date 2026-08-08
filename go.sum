@@ -1,9 +1,9 @@
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/gomatic/go-error v0.3.13 h1:Q2PAw8lt87XGDZQorId6MeAmHRJxT47XOK5eVAs/lr4=
-github.com/gomatic/go-error v0.3.13/go.mod h1:QVlrIcHreFp6u7n5UZiez8+eDllnV8eWP3vlDHSWnCo=
-github.com/gomatic/go-module v0.3.16 h1:W9DGeVLtdxzGmTI1qi1TeH4O/6oiLxckf7nHOC/8OSo=
-github.com/gomatic/go-module v0.3.16/go.mod h1:PeH5z48bVccILJXe5j4GwrBgJwBGerPvUFAHwHNHqiI=
+github.com/gomatic/go-error v0.3.14 h1:dDdQ3nY4tStJH4GTZNN2DoIU8zIGr1u28SGDAJZ1xws=
+github.com/gomatic/go-error v0.3.14/go.mod h1:QVlrIcHreFp6u7n5UZiez8+eDllnV8eWP3vlDHSWnCo=
+github.com/gomatic/go-module v0.3.21 h1:gWSruig1nEj69BcO4c4U1TE2toAtnE1rFXlq3enxm4Y=
+github.com/gomatic/go-module v0.3.21/go.mod h1:McubVrkxk2M1bPPecVLy2I+KWCYC4rdOSKXP47RHZBE=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
 github.com/kr/pretty v0.3.1/go.mod h1:hoEshYVHaxMs3cyo3Yncou5ZscifuDolrwPKZanG3xk=
 github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=

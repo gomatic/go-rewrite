@@ -13,6 +13,10 @@ type OSGit struct {
 	Dir FilePath
 }
 
+// execCommand is the subprocess seam: a reference to exec.Command rather than
+// a call, so a test can substitute a failing git without leaving the process.
+var execCommand = exec.Command
+
 // Remote returns the origin remote URL via "git remote get-url origin".
 func (g OSGit) Remote() (module.Remote, error) {
 	out, err := g.run("remote", "get-url", "origin")
@@ -33,7 +37,7 @@ func (g OSGit) Files() ([]FilePath, error) {
 
 // run executes a git subcommand in g.Dir and returns its standard output.
 func (g OSGit) run(args ...string) ([]byte, error) {
-	command := exec.Command("git", args...)
+	command := execCommand("git", args...)
 	command.Dir = string(g.Dir)
 	out, err := command.Output()
 	if err != nil {
